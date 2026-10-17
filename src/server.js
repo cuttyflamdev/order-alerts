@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { existsSync } from 'node:fs';
 import express from 'express';
 import { sendAlert } from './slack.js';
-import { error } from 'node:console';
+import { hasAlerted, markAlerted } from './store.js';
 
 if (existsSync('.env')) {
     process.loadEnvFile('.env');
@@ -30,7 +30,16 @@ function isValidHmac(rawBody, headerValue) {
     );
 }
 
-const seenWebhookIds = new Set();
+async function processOrder(order) {
+    if (hasAlerted(order.id)) {
+        console.log(`Order ${order.name} already alerted, skipping`);
+        return;
+    }
+    await sendAlert(
+        `New order ${order.name}: ${order.total_price} ${order.currency}`
+    );
+    markAlerted(order.id);
+}
 
 app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
     if (!isValidHmac(req.body, req.get('X-Shopify-Hmac-SHA256'))) {
@@ -38,13 +47,6 @@ app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
     }
     const topic = req.get('X-Shopify-Topic');
     const webhookId = req.get('X-Shopify-Webhook-Id');
-
-    if (webhookId && seenWebhookIds.has(webhookId)) {
-        console.log(`Duplicate webhook ${webhookId}, skipping`);
-        return res.status(200).send('OK');
-    }
-    if (webhookId) seenWebhookIds.add(webhookId);
-
     const order = JSON.parse(req.body.toString('utf8'));
 
     console.log(
@@ -53,9 +55,9 @@ app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
 
     res.status(200).send('OK');
 
-    sendAlert(`New order ${order.name}: ${order.total_price} ${order.currency}`).catch(
-        (error) => console.error('Failed to send Slack alert:', error.message)
-    );
+    processOrder(order).catch((error) => {
+        console.error(`Failed to process order ${order.name}:`, error.message)
+    });    
 });
 
 app.listen(3000, () => {
