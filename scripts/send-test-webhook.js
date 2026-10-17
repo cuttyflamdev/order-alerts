@@ -5,7 +5,12 @@ if (existsSync('.env')) {
     process.loadEnvFile('.env');
 }
 
-const body = JSON.stringify({ id: 1, name: '#TEST1' });
+const body = JSON.stringify({ 
+    id: 1, 
+    name: '#TEST1',
+    total_price: '25.00',
+    currency: 'USD' 
+});
 
 const hmac = crypto
     .createHmac('sha256', process.env.SHOPIFY_CLIENT_SECRET)
@@ -20,6 +25,7 @@ const response = await fetch('http://localhost:3000/webhooks', {
         'Content-Type': 'application/json',
         'X-Shopify-Hmac-SHA256': hmac,
         'X-Shopify-Webhook-Id': webhookId,
+        'X-Shopify-Topic': 'orders/create'
     },
     body,
 });

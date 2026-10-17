@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
 import { existsSync } from 'node:fs';
 import express from 'express';
+import { sendAlert } from './slack.js';
+import { error } from 'node:console';
 
 if (existsSync('.env')) {
     process.loadEnvFile('.env');
@@ -48,7 +50,12 @@ app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
     console.log(
         `[${topic}] order ${order.name}, total ${order.total_price} ${order.currency} (webhook ${webhookId})`
     );
+
     res.status(200).send('OK');
+
+    sendAlert(`New order ${order.name}: ${order.total_price} ${order.currency}`).catch(
+        (error) => console.error('Failed to send Slack alert:', error.message)
+    );
 });
 
 app.listen(3000, () => {
