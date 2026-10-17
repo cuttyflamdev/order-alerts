@@ -28,12 +28,26 @@ function isValidHmac(rawBody, headerValue) {
     );
 }
 
+const seenWebhookIds = new Set();
+
 app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
     if (!isValidHmac(req.body, req.get('X-Shopify-Hmac-SHA256'))) {
         return res.status(401).send('Invalid signature');
     }
-    const text = req.body.toString('utf8');
-    console.log('Received:', text);
+    const topic = req.get('X-Shopify-Topic');
+    const webhookId = req.get('X-Shopify-Webhook-Id');
+
+    if (webhookId && seenWebhookIds.has(webhookId)) {
+        console.log(`Duplicate webhook ${webhookId}, skipping`);
+        return res.status(200).send('OK');
+    }
+    if (webhookId) seenWebhookIds.add(webhookId);
+
+    const order = JSON.parse(req.body.toString('utf8'));
+
+    console.log(
+        `[${topic}] order ${order.name}, total ${order.total_price} ${order.currency} (webhook ${webhookId})`
+    );
     res.status(200).send('OK');
 });
 

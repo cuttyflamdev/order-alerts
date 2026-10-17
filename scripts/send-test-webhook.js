@@ -12,11 +12,14 @@ const hmac = crypto
     .update(body)
     .digest('base64');
 
+const webhookId = process.argv[2] ?? crypto.randomUUID();
+
 const response = await fetch('http://localhost:3000/webhooks', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
         'X-Shopify-Hmac-SHA256': hmac,
+        'X-Shopify-Webhook-Id': webhookId,
     },
     body,
 });
