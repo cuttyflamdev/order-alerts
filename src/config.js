@@ -17,3 +17,4 @@ export const CLIENT_ID = required('SHOPIFY_CLIENT_ID');
 export const CLIENT_SECRET = required('SHOPIFY_CLIENT_SECRET');
 export const SLACK_WEBHOOK_URL = required('SLACK_WEBHOOK_URL');
 export const PORT = process.env.PORT || 3000;
+export const DATABASE_URL = required('DATABASE_URL');
