@@ -15,7 +15,9 @@ const hmac = crypto
     .update(body)
     .digest('base64');
 
-const response = await fetch('http://localhost:3000/webhooks', {
+const target = process.env.WEBHOOK_URL ?? 'http://localhost:3000/webhooks';
+
+const response = await fetch(target, {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
