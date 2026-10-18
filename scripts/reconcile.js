@@ -1,6 +1,7 @@
 import { graphql } from '../src/shopify.js';
 import { sendAlert } from '../src/slack.js';
 import { hasAlerted, markAlerted } from '../src/store.js';
+import { pool } from '../src/db.js';
 
 const hours = Number(process.argv[2]) || 24;
 const shouldSend = process.argv.includes('--send');
@@ -52,7 +53,12 @@ async function fetchRecentOrders(since) {
 
 const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
 const orders = await fetchRecentOrders(since);
-const missed = orders.filter((order) => !hasAlerted(numericId(order.id)));
+const missed = [];
+for (const order of orders) {
+  if (!await hasAlerted(numericId(order.id))) {
+    missed.push(order);
+  }
+}
 
 const formatPT = (iso) =>
   new Date(iso).toLocaleString('en-US', {
@@ -77,6 +83,8 @@ for (const order of missed) {
   }
 
   await sendAlert(text);
-  markAlerted(numericId(order.id));
+  await markAlerted(numericId(order.id));
   console.log(`Alerted: ${text}`);
 }
+
+await pool.end();

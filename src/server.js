@@ -22,14 +22,14 @@ function isValidHmac(rawBody, headerValue) {
 }
 
 async function processOrder(order) {
-    if (hasAlerted(order.id)) {
+    if (await hasAlerted(order.id)) {
         console.log(`Order ${order.name} already alerted, skipping`);
         return;
     }
     await sendAlert(
         `New order ${order.name}: ${order.total_price} ${order.currency}`
     );
-    markAlerted(order.id);
+    await markAlerted(order.id);
 }
 
 app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {

@@ -1,21 +1,16 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { pool } from './db.js';
 
-const DATA_DIR = 'data';
-const FILE = `${DATA_DIR}/alerted-orders.json`;
-
-function load() {
-  if (!existsSync(FILE)) return new Set();
-  return new Set(JSON.parse(readFileSync(FILE, 'utf8')));
+export async function hasAlerted(orderId) {
+  const { rowCount } = await pool.query(
+    'select 1 from alerted_orders where order_id = $1',
+    [String(orderId)]
+  );
+  return rowCount > 0
 }
 
-const alerted = load();
-
-export function hasAlerted(orderId) {
-  return alerted.has(String(orderId));
-}
-
-export function markAlerted(orderId) {
-  alerted.add(String(orderId));
-  mkdirSync(DATA_DIR, { recursive: true });
-  writeFileSync(FILE, JSON.stringify([...alerted]));
+export async function markAlerted(orderId) {
+  await pool.query(
+    'insert into alerted_orders (order_id) values ($1) on conflict (order_id) do nothing',
+    [String(orderId)]
+  );
 }
