@@ -1,17 +1,8 @@
 import crypto from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { CLIENT_SECRET, PORT } from './config.js';
 import express from 'express';
 import { sendAlert } from './slack.js';
 import { hasAlerted, markAlerted } from './store.js';
-
-if (existsSync('.env')) {
-    process.loadEnvFile('.env');
-}
-
-const CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET;
-if (!CLIENT_SECRET) {
-    throw new Error('Set SHOPIFY_CLIENT_SECRET in your environment.');
-}
 
 const app = express();
 
@@ -60,6 +51,6 @@ app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
     });    
 });
 
-app.listen(3000, () => {
-    console.log('Listening on port 3000');
+app.listen(PORT, () => {
+    console.log(`Listening on port ${PORT}`);
 });

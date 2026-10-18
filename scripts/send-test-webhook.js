@@ -1,9 +1,5 @@
 import crypto from 'node:crypto';
-import { existsSync } from 'node:fs';
-
-if (existsSync('.env')) {
-    process.loadEnvFile('.env');
-}
+import { CLIENT_SECRET } from '../src/config.js';
 
 const orderId = process.argv[2] ?? String(Date.now());
 
@@ -15,7 +11,7 @@ const body = JSON.stringify({
 });
 
 const hmac = crypto
-    .createHmac('sha256', process.env.SHOPIFY_CLIENT_SECRET)
+    .createHmac('sha256', CLIENT_SECRET)
     .update(body)
     .digest('base64');
 

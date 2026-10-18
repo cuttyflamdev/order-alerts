@@ -1,13 +1,4 @@
-import { existsSync } from 'node:fs';
-
-if (existsSync('.env')) {
-  process.loadEnvFile('.env');
-}
-
-const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
-if (!SLACK_WEBHOOK_URL) {
-  throw new Error('Set SLACK_WEBHOOK_URL in your environment.');
-}
+import { SLACK_WEBHOOK_URL } from "./config.js";
 
 export async function sendAlert(text) {
   const response = await fetch(SLACK_WEBHOOK_URL, {
